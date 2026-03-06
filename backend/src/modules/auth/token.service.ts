@@ -8,7 +8,7 @@ export class TokenService {
   async signAccessToken(payload: any) {
     const access_token = await this.jwtService.signAsync(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,
-      expiresIn: process.env.ACCESS_EXPIRES_AT_MS! as any,
+      expiresIn: parseInt(process.env.ACCESS_EXPIRES_AT_MS!) / 1000,
     });
 
     return access_token;
@@ -17,7 +17,7 @@ export class TokenService {
   async signRefreshToken(payload: any) {
     const refresh_token = await this.jwtService.signAsync(payload, {
       secret: process.env.REFRESH_TOKEN_SECRET,
-      expiresIn: process.env.REFRESH_EXPIRES_AT_MS! as any,
+      expiresIn: parseInt(process.env.REFRESH_EXPIRES_AT_MS!) / 1000,
     });
 
     return refresh_token;
