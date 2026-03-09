@@ -3,18 +3,14 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   HttpCode,
   Req,
-  Res,
   UnauthorizedException,
   InternalServerErrorException,
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { EmailLoginDto } from './dto/emailLogin.dto';
 
