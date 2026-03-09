@@ -16,6 +16,7 @@ function App() {
     flow: "auth-code",
     onSuccess: async (codeResponse) => {
       try {
+        console.log(codeResponse);
         const singupRes = await axios.get(
           "http://localhost:5000/auth/signup/google",
           {

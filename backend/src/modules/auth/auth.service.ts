@@ -94,6 +94,9 @@ export class AuthService {
       console.log('error: ', error);
       throw error;
     }
+
+    try {
+    } catch (error) {}
   }
 
   async verifySession(
@@ -201,7 +204,7 @@ export class AuthService {
       });
 
       const refresh_token_expires = new Date(
-        Date.now() + parseInt(process.env.REFRESH_EXPIRES_AT_MS!),
+        Date.now() + 7 * 24 * 60 * 60 * 1000,
       );
 
       const refresh_token_hashed = await bcrypt.hash(refresh_token, 10);
@@ -216,7 +219,7 @@ export class AuthService {
 
       await this.redis.pexpire(
         `sessions:${findUser.id}`,
-        parseInt(process.env.REFRESH_EXPIRES_AT_MS!),
+        7 * 24 * 60 * 60 * 1000,
       );
 
       return {
@@ -305,7 +308,7 @@ export class AuthService {
       });
 
       const refresh_token_expires = new Date(
-        Date.now() + parseInt(process.env.REFRESH_EXPIRES_AT_MS!),
+        Date.now() + 7 * 24 * 60 * 60 * 1000,
       );
 
       const refresh_token_hashed = await bcrypt.hash(refresh_token, 10);
@@ -323,7 +326,7 @@ export class AuthService {
 
       await this.redis.pexpire(
         `sessions:${findUser.id}`,
-        parseInt(process.env.REFRESH_EXPIRES_AT_MS!),
+        7 * 24 * 60 * 60 * 1000,
       );
 
       return {
@@ -397,7 +400,7 @@ export class AuthService {
       const refresh_token_hashed = await bcrypt.hash(new_refresh_token, 10);
 
       const refresh_token_expires = new Date(
-        Date.now() + parseInt(process.env.REFRESH_EXPIRES_AT_MS!),
+        Date.now() + 7 * 24 * 60 * 60 * 1000,
       );
 
       await this.redis.hset(`sessions:${user.id}`, {
@@ -409,10 +412,7 @@ export class AuthService {
         expiresAt: refresh_token_expires,
       });
 
-      await this.redis.pexpire(
-        `sessions:${user.id}`,
-        parseInt(process.env.REFRESH_EXPIRES_AT_MS!),
-      );
+      await this.redis.pexpire(`sessions:${user.id}`, 7 * 24 * 60 * 60 * 1000);
 
       return {
         message: 'You have logged in successfully',

@@ -6,18 +6,28 @@ export class TokenService {
   constructor(private readonly jwtService: JwtService) {}
 
   async signAccessToken(payload: any) {
+    console.log(
+      process.env.ACCESS_EXPIRES_AT_MS,
+      typeof parseInt(process.env.ACCESS_EXPIRES_AT_MS!),
+    );
+
     const access_token = await this.jwtService.signAsync(payload, {
       secret: process.env.ACCESS_TOKEN_SECRET,
-      expiresIn: parseInt(process.env.ACCESS_EXPIRES_AT_MS!) / 1000,
+      expiresIn: process.env.ACCESS_EXPIRES_AT_MS! as any,
     });
 
     return access_token;
   }
 
   async signRefreshToken(payload: any) {
+    console.log(
+      process.env.REFRESH_EXPIRES_AT_MS,
+      typeof parseInt(process.env.REFRESH_EXPIRES_AT_MS!),
+    );
+
     const refresh_token = await this.jwtService.signAsync(payload, {
       secret: process.env.REFRESH_TOKEN_SECRET,
-      expiresIn: parseInt(process.env.REFRESH_EXPIRES_AT_MS!) / 1000,
+      expiresIn: process.env.REFRESH_EXPIRES_AT_MS! as any,
     });
 
     return refresh_token;
