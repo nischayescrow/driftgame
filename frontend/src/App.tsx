@@ -273,7 +273,7 @@ function App() {
               backgroundColor: "blue",
               color: "white",
             }}
-            onClick={login}
+            onClick={() => login()}
           >
             Sign in with Google
           </button>

@@ -42,7 +42,7 @@ export class AuthController {
 
   @Get('login/google')
   @HttpCode(HttpStatus.OK)
-  async loginWithGoogle(@Req() req: Request, @Res() res: Response) {
+  async loginWithGoogle(@Req() req: Request) {
     const authCode = req.headers.authorization;
 
     console.log('authCode: ', authCode);
@@ -57,27 +57,12 @@ export class AuthController {
       throw new InternalServerErrorException('Failed to login!');
     }
 
-    res.cookie('refresh_token', loginRes.refresh_token, {
-      httpOnly: true,
-      secure: process.env.APP_ENV! === 'production',
-      sameSite: process.env.APP_ENV! === 'production' ? 'none' : 'strict',
-      path: '/',
-      expires: loginRes.refresh_token_expires,
-    });
-
-    return res.json({
-      message: loginRes.message,
-      access_token: loginRes.access_token,
-      user: loginRes.user,
-    });
+    return loginRes;
   }
 
   @Post('login/email')
   @HttpCode(HttpStatus.OK)
-  async loginWithEmail(
-    @Res() res: Response,
-    @Body() emailLoginDto: EmailLoginDto,
-  ) {
+  async loginWithEmail(@Body() emailLoginDto: EmailLoginDto) {
     const loginRes = await this.authService.loginWithEmail(emailLoginDto);
 
     console.log('loginRes: ', loginRes);
@@ -86,24 +71,12 @@ export class AuthController {
       throw new InternalServerErrorException('Failed to login!');
     }
 
-    res.cookie('refresh_token', loginRes.refresh_token, {
-      httpOnly: true,
-      secure: process.env.APP_ENV! === 'production',
-      sameSite: process.env.APP_ENV! === 'production' ? 'none' : 'strict',
-      path: '/',
-      expires: loginRes.refresh_token_expires,
-    });
-
-    return res.json({
-      message: loginRes.message,
-      access_token: loginRes.access_token,
-      user: loginRes.user,
-    });
+    return loginRes;
   }
 
   @Get('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Req() req: Request, @Res() res: Response) {
+  async refreshToken(@Req() req: Request) {
     const refresh_token = req.cookies['refresh_token'];
     console.log('refresh_token', refresh_token);
 
@@ -123,19 +96,7 @@ export class AuthController {
       throw new InternalServerErrorException('Failed to refresh!');
     }
 
-    res.cookie('refresh_token', refreshRes.refresh_token, {
-      httpOnly: true,
-      secure: process.env.APP_ENV! === 'production',
-      sameSite: process.env.APP_ENV! === 'production' ? 'none' : 'strict',
-      path: '/',
-      expires: refreshRes.refresh_token_expires,
-    });
-
-    return res.json({
-      message: refreshRes.message,
-      access_token: refreshRes.access_token,
-      user: refreshRes.user,
-    });
+    return refreshRes;
   }
 
   @Get('logout')

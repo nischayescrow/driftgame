@@ -37,11 +37,7 @@ export abstract class BaseWsGateway
 
       console.log(tokenDecoded);
 
-      if (
-        !tokenDecoded ||
-        !tokenDecoded.sub.session_id ||
-        !tokenDecoded.sub.user_id
-      ) {
+      if (!tokenDecoded || !tokenDecoded.session_id || !tokenDecoded.user_id) {
         client.emit('message', { message: '401:Unauthorized request!' });
         client.disconnect();
         return;
@@ -49,8 +45,8 @@ export abstract class BaseWsGateway
       }
 
       const userData = await this.authService.verifySession(
-        tokenDecoded.sub.session_id,
-        tokenDecoded.sub.user_id,
+        tokenDecoded.session_id,
+        tokenDecoded.user_id,
       );
 
       if (!userData) {

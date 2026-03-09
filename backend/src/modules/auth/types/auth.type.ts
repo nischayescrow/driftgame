@@ -6,10 +6,14 @@ export interface LoginUserRes {
   user: Partial<UserDocument>;
   access_token: string;
   refresh_token: string;
-  refresh_token_expires: Date;
 }
 
 export interface verifySessionRes {
   session: SessionHash;
   user: UserDocument;
+}
+
+export interface TokenPayloadType {
+  user_id: string;
+  session_id: string;
 }

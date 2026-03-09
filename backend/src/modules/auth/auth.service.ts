@@ -17,6 +17,7 @@ import { REDIS_CLIENT } from '../redis/redis.module';
 import Redis from 'ioredis';
 import { randomUUID } from 'crypto';
 import { SocketStatus } from '../socket/socket.gateway';
+import { OAuth2Client } from 'google-auth-library';
 
 export enum SessionStatus {
   BLOCKED = 0,
@@ -94,9 +95,6 @@ export class AuthService {
       console.log('error: ', error);
       throw error;
     }
-
-    try {
-    } catch (error) {}
   }
 
   async verifySession(
@@ -172,9 +170,25 @@ export class AuthService {
     }
   }
 
-  async loginWithGoogle(authCode: string): Promise<LoginUserRes> {
+  async loginWithGoogle(authCode: string): Promise<LoginUserRes | any> {
     try {
+      // Login with GOOGLE with id_token
+      // const client = new OAuth2Client();
+
+      // const token = await client.verifyIdToken({
+      //   idToken: id_token,
+      //   audience: process.env.GOOGLE_CLIENT_ID!,
+      // });
+
+      // const payload = token.getPayload();
+
+      // console.log('GoogleUserData: ', payload);
+
+      // return { ok: true };
+
       const userData = await this.getUserDataGoogle(authCode);
+
+      console.log('userData: ', userData);
 
       const findUser = await this.userService.findByEmail(userData.email);
 
@@ -184,23 +198,22 @@ export class AuthService {
         throw new BadRequestException('User is not registered!');
       }
 
-      // const createSession = await this.createSession(findUser.id);
+      if (findUser.status !== UserStatus.ACTIVE) {
+        throw new BadRequestException('User account is not active!');
+      }
+
       const createdSession = randomUUID();
 
       console.log('storing session in redis');
 
       const access_token = await this.tokenService.signAccessToken({
-        sub: {
-          session_id: createdSession,
-          user_id: findUser.id,
-        },
+        session_id: createdSession,
+        user_id: findUser.id,
       });
 
       const refresh_token = await this.tokenService.signRefreshToken({
-        sub: {
-          session_id: createdSession,
-          user_id: findUser.id,
-        },
+        session_id: createdSession,
+        user_id: findUser.id,
       });
 
       const refresh_token_expires = new Date(
@@ -240,7 +253,6 @@ export class AuthService {
         },
         access_token,
         refresh_token,
-        refresh_token_expires,
       };
     } catch (error) {
       console.log('error: ', error);
@@ -252,7 +264,7 @@ export class AuthService {
     try {
       const findUser = await this.userService.findByEmail(
         emailLoginDto.email,
-        true,
+        false,
         true,
       );
 
@@ -261,23 +273,13 @@ export class AuthService {
       }
 
       if (findUser.status !== UserStatus.ACTIVE) {
-        switch (findUser.status) {
-          case UserStatus.BLOCKED: {
-            throw new BadRequestException('User account is blocked');
-          }
-
-          case UserStatus.DELETED: {
-            throw new BadRequestException('User do not found');
-          }
-
-          case UserStatus.NOTACTIVE: {
-            throw new BadRequestException('User account is not active');
-          }
-        }
+        throw new BadRequestException('User account is not active');
       }
 
       if (!findUser.password) {
-        throw new BadRequestException('User have not set any password!');
+        throw new BadRequestException(
+          'You have not set any password, try login with Google!',
+        );
       }
 
       // check password here
@@ -294,17 +296,13 @@ export class AuthService {
       const createdSession = randomUUID();
 
       const access_token = await this.tokenService.signAccessToken({
-        sub: {
-          session_id: createdSession,
-          user_id: findUser.id,
-        },
+        session_id: createdSession,
+        user_id: findUser.id,
       });
 
       const refresh_token = await this.tokenService.signRefreshToken({
-        sub: {
-          session_id: createdSession,
-          user_id: findUser.id,
-        },
+        session_id: createdSession,
+        user_id: findUser.id,
       });
 
       const refresh_token_expires = new Date(
@@ -347,7 +345,6 @@ export class AuthService {
         },
         access_token,
         refresh_token,
-        refresh_token_expires,
       };
     } catch (error) {
       console.log('error: ', error);
@@ -374,8 +371,7 @@ export class AuthService {
     session: SessionHash,
   ): Promise<LoginUserRes> {
     try {
-      const refresh_token_decoded =
-        await this.tokenService.verifyRefreshToken(refresh_token);
+      await this.tokenService.verifyRefreshToken(refresh_token);
 
       const isMatch = await bcrypt.compare(refresh_token, session.hashedToken);
 
@@ -384,17 +380,13 @@ export class AuthService {
       }
 
       const new_access_token = await this.tokenService.signAccessToken({
-        sub: {
-          session_id: session.session_id,
-          user_id: user.id,
-        },
+        session_id: session.session_id,
+        user_id: user.id,
       });
 
       const new_refresh_token = await this.tokenService.signRefreshToken({
-        sub: {
-          session_id: session.session_id,
-          user_id: user.id,
-        },
+        session_id: session.session_id,
+        user_id: user.id,
       });
 
       const refresh_token_hashed = await bcrypt.hash(new_refresh_token, 10);
@@ -432,7 +424,6 @@ export class AuthService {
         },
         access_token: new_access_token,
         refresh_token: new_refresh_token,
-        refresh_token_expires,
       };
     } catch (error) {
       console.log(error);

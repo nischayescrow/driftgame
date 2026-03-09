@@ -26,7 +26,7 @@ export class UserRepository {
           $and: [{ email }],
         }
       : {
-          $and: [{ email }, { status: UserStatus.ACTIVE }],
+          $and: [{ email }, { status: { $ne: UserStatus.DELETED } }],
         };
 
     return await this.userModel.findOne(findQuery, userProj);
@@ -50,8 +50,7 @@ export class UserRepository {
           _id: id,
         }
       : {
-          _id: id,
-          status: UserStatus.ACTIVE,
+          $and: [{ _id: id }, { status: { $ne: UserStatus.DELETED } }],
         };
 
     return await this.userModel.findOne(findQuery, userProj);
@@ -81,7 +80,7 @@ export class UserRepository {
                 { email: { $regex: text, $options: 'i' } },
               ],
             },
-            { status: UserStatus.ACTIVE },
+            { status: { $ne: UserStatus.ACTIVE } },
           ],
         };
 

@@ -33,19 +33,15 @@ export class AuthMiddleware implements NestMiddleware {
 
       const tokenDecoded = await this.tokenService.verifyAccessToken(token);
 
-      if (
-        !tokenDecoded ||
-        !tokenDecoded.sub.session_id ||
-        !tokenDecoded.sub.user_id
-      ) {
+      if (!tokenDecoded || !tokenDecoded.session_id || !tokenDecoded.user_id) {
         throw new UnauthorizedException();
       }
 
       // console.log('access_tokenDecoded: ', tokenDecoded);
 
       const userData = await this.authService.verifySession(
-        tokenDecoded.sub.session_id,
-        tokenDecoded.sub.user_id,
+        tokenDecoded.session_id,
+        tokenDecoded.user_id,
       );
 
       // console.log('userData: ', userData);

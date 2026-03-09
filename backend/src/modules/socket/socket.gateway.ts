@@ -105,19 +105,15 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       console.log(tokenDecoded);
 
-      if (
-        !tokenDecoded ||
-        !tokenDecoded.sub.session_id ||
-        !tokenDecoded.sub.user_id
-      ) {
+      if (!tokenDecoded || !tokenDecoded.session_id || !tokenDecoded.user_id) {
         client.emit('message', { server: '401:Unauthorized request!' });
         client.disconnect();
         return;
       }
 
       const userData = await this.authService.verifySession(
-        tokenDecoded.sub.session_id,
-        tokenDecoded.sub.user_id,
+        tokenDecoded.session_id,
+        tokenDecoded.user_id,
       );
 
       if (!userData) {
@@ -131,7 +127,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       client.data.user = userData.user.id;
 
-      // Only one user per session
+      // Only one user per session allows if user connect with another socket/session we end old one and start new one
       const oldUserSession = await this.redis.hget(
         `sessions:${client.data.user}`,
         'session_id',
@@ -154,6 +150,11 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Add user to redis
       await this.addUserIntoRedis(client.id, client.data.user);
 
+      this.playerStatusTime = setTimeout(async () => {
+        await this.removeUser(client);
+        client.emit('player:logout');
+      }, 20000);
+
       console.log('Client connected: ', client.id);
     } catch (error) {
       console.log(error);
@@ -165,12 +166,15 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       console.log('Client disconnected: ', client?.id);
 
-      // Redis:userData disconnected
+      // update user socket connecrted as disconnected in redis
       await this.redis.hset(
-        `sessions:${client?.data.user}`,
+        `sessions:${client.data.user}`,
         'socketStatus',
         SocketStatus.DISCONNECTED,
       );
+
+      //wait for 20 seconds if user reconnect again other wise remove user from redis
+      await this.addUserIntoRedis(client.id, client.data.user);
 
       this.playerStatusTime = setTimeout(async () => {
         await this.removeUser(client);
@@ -184,6 +188,8 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   //<=================== Lobby Events ===================>
   @SubscribeMessage('player:connected')
   async playerConnecte(client: Socket, payload: any) {
+    //This is heartbeat for online user, here client must send tick every 5/10 seconds
+    // otherwise we wait for 20 seconds then remove user from redis and mark user as offline.
     clearTimeout(this.playerStatusTime);
 
     console.log('checking player status...');
@@ -198,7 +204,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
 
-    // update user with new TTL to redis
+    // update user with new TTL to redis for anonther 20 seconds
     await this.addUserIntoRedis(client.id, client.data.user);
 
     this.playerStatusTime = setTimeout(async () => {

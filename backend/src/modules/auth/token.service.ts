@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
+import { TokenPayloadType } from './types/auth.type';
 
 @Injectable()
 export class TokenService {
   constructor(private readonly jwtService: JwtService) {}
 
-  async signAccessToken(payload: any) {
+  async signAccessToken(payload: TokenPayloadType) {
     console.log(
       process.env.ACCESS_EXPIRES_AT_MS,
       typeof parseInt(process.env.ACCESS_EXPIRES_AT_MS!),
@@ -19,7 +20,7 @@ export class TokenService {
     return access_token;
   }
 
-  async signRefreshToken(payload: any) {
+  async signRefreshToken(payload: TokenPayloadType) {
     console.log(
       process.env.REFRESH_EXPIRES_AT_MS,
       typeof parseInt(process.env.REFRESH_EXPIRES_AT_MS!),
@@ -33,7 +34,7 @@ export class TokenService {
     return refresh_token;
   }
 
-  async verifyAccessToken(token: string) {
+  async verifyAccessToken(token: string): Promise<TokenPayloadType | null> {
     try {
       const access_token_decoded = await this.jwtService.verifyAsync(token, {
         secret: process.env.ACCESS_TOKEN_SECRET,
@@ -51,7 +52,7 @@ export class TokenService {
     }
   }
 
-  async verifyRefreshToken(token: string) {
+  async verifyRefreshToken(token: string): Promise<TokenPayloadType | null> {
     try {
       const refresh_token_decoded = await this.jwtService.verifyAsync(token, {
         secret: process.env.REFRESH_TOKEN_SECRET,
