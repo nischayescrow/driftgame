@@ -24,6 +24,15 @@ export class ClientConfigController {
     return this.clientConfigService.findById(id.trim(), all);
   }
 
+  @Get('get/:version')
+  @HttpCode(HttpStatus.OK)
+  findByBuildVersion(
+    @Param('version') version: string,
+    @Query('all') all: boolean,
+  ) {
+    return this.clientConfigService.findByVersion(version.trim(), all);
+  }
+
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createClientConfigDto: CreateClientConfigDto) {

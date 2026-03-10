@@ -45,6 +45,25 @@ export class ClientConfigService {
     }
   }
 
+  async findByVersion(version: string, all: boolean = false) {
+    try {
+      const findConfig = await this.clientConfigRepo.findByBuildVer(
+        parseInt(version),
+      );
+
+      // console.log('findById', findConfig);
+
+      if (!findConfig) {
+        throw new NotFoundException('Client config do not found!');
+      }
+
+      return findConfig;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
   async create(createClientConfigDto: CreateClientConfigDto) {
     try {
       const findConfig = await this.clientConfigRepo.findByBuildVer(
