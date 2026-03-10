@@ -292,7 +292,6 @@ export class AuthService {
         throw new UnauthorizedException('Incorrect credentials!');
       }
 
-      // const createSession = await this.createSession(findUser.id);
       const createdSession = randomUUID();
 
       const access_token = await this.tokenService.signAccessToken({

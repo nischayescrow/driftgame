@@ -80,7 +80,7 @@ export class UserRepository {
                 { email: { $regex: text, $options: 'i' } },
               ],
             },
-            { status: { $ne: UserStatus.ACTIVE } },
+            { status: { $ne: UserStatus.DELETED } },
           ],
         };
 

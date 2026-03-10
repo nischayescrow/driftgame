@@ -52,24 +52,27 @@ export class LobbyService {
       }
 
       // if there is already pending request
-      const exist = await Promise.all(
-        sender.sentFriendRequests.map(async (r) => {
-          const findReq = await this.friendReqService.findById(String(r));
-          if (
-            findReq &&
-            String(findReq.receiver_id) === receiver.id &&
-            findReq.status === FriendReqStatus.PENDING
-          ) {
-            return findReq;
-          }
-        }),
-      );
 
-      if (exist && exist.length > 0) {
-        client.emit('message', {
-          message: `Friend request still pending from user`,
-        });
-        return;
+      if (sender.sentFriendRequests && sender.sentFriendRequests.length > 0) {
+        const exist = await Promise.all(
+          sender.sentFriendRequests.map(async (r) => {
+            const findReq = await this.friendReqService.findById(String(r));
+            if (
+              findReq &&
+              String(findReq.receiver_id) === receiver.id &&
+              findReq.status === FriendReqStatus.PENDING
+            ) {
+              return findReq;
+            }
+          }),
+        );
+
+        if (exist && exist.length > 0) {
+          client.emit('message', {
+            message: `Friend request still pending from user`,
+          });
+          return;
+        }
       }
 
       //Send friend request
@@ -77,17 +80,21 @@ export class LobbyService {
 
       const findReceiverSocket = await this.redis.hget(
         `sessions:${payload.receiver_id}`,
-        'socket',
+        'socket_id',
       );
 
       console.log('findReceiverSocket: ', findReceiverSocket);
 
       const liveUser = sockets.filter((sck) => sck.id === findReceiverSocket);
 
+      console.log('liveUser: ', liveUser ? true : false);
+
       const friendRequest = await this.friendReqService.createFriendRequest(
         payload.sender_id,
         payload.receiver_id,
       );
+
+      console.log('friendRequest: ', friendRequest);
 
       if (liveUser && liveUser.length > 0) {
         const findUser = await this.userService.findById(client.data.user);
@@ -102,17 +109,17 @@ export class LobbyService {
           message: `Friend request received from "${findUser.first_name + ' ' + findUser.last_name}"`,
         });
 
-        this.friendReqService.updateFriendReqStatus(
+        await this.friendReqService.updateFriendReqStatus(
           String(friendRequest.id),
           FriendReqStatus.SENT,
         );
 
-        // console.log('friendRequest: ', friendRequest);
+        console.log('friendRequest: ', friendRequest);
 
         client.emit('message', { message: `Friend request sent successfully` });
       } else {
         // Receiver is not live
-        this.friendReqService.updateFriendReqStatus(
+        await this.friendReqService.updateFriendReqStatus(
           String(friendRequest.id),
           FriendReqStatus.PENDING,
         );
@@ -161,7 +168,7 @@ export class LobbyService {
 
       const findSenderSocket = await this.redis.hget(
         `sessions:${findReqest.sender_id}`,
-        'socket',
+        'socket_id',
       );
 
       // console.log('findSenderSocket: ', findSenderSocket);
@@ -242,7 +249,7 @@ export class LobbyService {
 
       const findSenderSocket = await this.redis.hget(
         `sessions:${findReqest.sender_id}`,
-        'socket',
+        'socket_id',
       );
 
       console.log('findSenderSocket: ', findSenderSocket);

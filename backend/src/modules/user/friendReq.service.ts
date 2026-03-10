@@ -8,10 +8,14 @@ import {
 import { FriendReqRepository } from './repositories/friendRequest.repository';
 import { FriendReqStatus } from './schemas/friendReq.schema';
 import { Types } from 'mongoose';
+import { UserService } from './user.service';
 
 @Injectable()
 export class FriendReqService {
-  constructor(private readonly friendReqRepo: FriendReqRepository) {}
+  constructor(
+    private readonly friendReqRepo: FriendReqRepository,
+    private readonly userService: UserService,
+  ) {}
 
   //Friend request CRUD
   async createFriendRequest(
@@ -20,8 +24,8 @@ export class FriendReqService {
     status: FriendReqStatus = FriendReqStatus.NOTSEND,
   ) {
     try {
-      const sender = await this.findById(sender_id);
-      const receiver = await this.findById(receiver_id);
+      const sender = await this.userService.findById(sender_id);
+      const receiver = await this.userService.findById(receiver_id);
 
       if (!sender || !receiver) {
         throw new NotFoundException('User do not found!');
@@ -54,8 +58,11 @@ export class FriendReqService {
   }
 
   async updateFriendReqStatus(id: string, status: FriendReqStatus) {
+    console.log('updateFriendReqStatus: ', id);
     try {
       const findReq = await this.friendReqRepo.findById(id);
+
+      console.log('findReq: ', findReq);
 
       if (!findReq) {
         throw new NotFoundException('Request do not found!');
