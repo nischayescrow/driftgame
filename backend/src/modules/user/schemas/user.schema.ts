@@ -27,7 +27,7 @@ export class User {
   @Prop({ type: Boolean, default: false })
   email_verified: boolean;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: false })
   picture: string;
 
   @Prop({ type: Number, enum: UserStatus, default: UserStatus.NOTACTIVE })

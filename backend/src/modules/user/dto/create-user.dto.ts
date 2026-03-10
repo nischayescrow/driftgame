@@ -21,19 +21,19 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
-  // @IsOptional()
+  @IsOptional()
   @IsString()
   password?: string;
 
   @IsOptional()
   @IsNotEmpty()
   @IsBoolean()
-  email_verified: boolean;
+  email_verified?: boolean;
 
   @IsOptional()
   @IsNotEmpty()
   @IsString()
-  picture: string;
+  picture?: string;
 
   @IsOptional()
   @IsEnum(UserStatus)
