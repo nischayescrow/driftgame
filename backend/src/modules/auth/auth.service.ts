@@ -364,28 +364,47 @@ export class AuthService {
     }
   }
 
-  async refreshToken(
-    refresh_token: string,
-    user: UserDocument,
-    session: SessionHash,
-  ): Promise<LoginUserRes> {
+  async refreshToken(refresh_token: string): Promise<LoginUserRes> {
     try {
-      await this.tokenService.verifyRefreshToken(refresh_token);
+      const tokenDecoded =
+        await this.tokenService.verifyRefreshToken(refresh_token);
 
-      const isMatch = await bcrypt.compare(refresh_token, session.hashedToken);
+      if (!tokenDecoded || !tokenDecoded.session_id || !tokenDecoded.user_id) {
+        throw new UnauthorizedException();
+      }
+
+      console.log('refresh_tokenDecoded: ', tokenDecoded);
+
+      const userData = await this.verifySession(
+        tokenDecoded.session_id,
+        tokenDecoded.user_id,
+      );
+
+      console.log('userData: ', userData);
+
+      if (!userData) {
+        throw new UnauthorizedException(
+          'No active session, please login again!',
+        );
+      }
+
+      const isMatch = await bcrypt.compare(
+        refresh_token,
+        userData.session.hashedToken,
+      );
 
       if (!isMatch) {
         throw new UnauthorizedException();
       }
 
       const new_access_token = await this.tokenService.signAccessToken({
-        session_id: session.session_id,
-        user_id: user.id,
+        session_id: userData.session.session_id,
+        user_id: userData.user.id,
       });
 
       const new_refresh_token = await this.tokenService.signRefreshToken({
-        session_id: session.session_id,
-        user_id: user.id,
+        session_id: userData.session.session_id,
+        user_id: userData.user.id,
       });
 
       const refresh_token_hashed = await bcrypt.hash(new_refresh_token, 10);
@@ -394,32 +413,35 @@ export class AuthService {
         Date.now() + 7 * 24 * 60 * 60 * 1000,
       );
 
-      await this.redis.hset(`sessions:${user.id}`, {
-        session_id: session.session_id,
-        user_id: user.id,
+      await this.redis.hset(`sessions:${userData.user.id}`, {
+        session_id: userData.session.session_id,
+        user_id: userData.user.id,
         hashedToken: refresh_token_hashed,
         status: SessionStatus.ACTIVE,
         createdAt: Date.now(),
         expiresAt: refresh_token_expires,
       });
 
-      await this.redis.pexpire(`sessions:${user.id}`, 7 * 24 * 60 * 60 * 1000);
+      await this.redis.pexpire(
+        `sessions:${userData.user.id}`,
+        7 * 24 * 60 * 60 * 1000,
+      );
 
       return {
         message: 'You have logged in successfully',
         user: {
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          email_verified: user.email_verified,
-          picture: user.picture,
-          status: user.status,
-          friends: user.friends,
-          sentFriendRequests: user.sentFriendRequests,
-          receviedFriendRequests: user.receviedFriendRequests,
-          id: user.id,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
+          first_name: userData.user.first_name,
+          last_name: userData.user.last_name,
+          email: userData.user.email,
+          email_verified: userData.user.email_verified,
+          picture: userData.user.picture,
+          status: userData.user.status,
+          friends: userData.user.friends,
+          sentFriendRequests: userData.user.sentFriendRequests,
+          receviedFriendRequests: userData.user.receviedFriendRequests,
+          id: userData.user.id,
+          createdAt: userData.user.createdAt,
+          updatedAt: userData.user.updatedAt,
         },
         access_token: new_access_token,
         refresh_token: new_refresh_token,

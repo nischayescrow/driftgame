@@ -73,18 +73,20 @@ export class AuthController {
   @Get('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshToken(@Req() req: Request) {
-    const refresh_token = req.cookies['refresh_token'];
-    console.log('refresh_token', refresh_token);
+    const authorization = req.headers.authorization;
+    const refresh_token = authorization?.split(' ')[1];
 
-    if (!refresh_token || !req.user || !req.session) {
-      throw new UnauthorizedException('Session expired, Please login again!');
+    console.log('REFRESH TOKEN: ', authorization);
+
+    if (
+      !authorization ||
+      authorization?.split(' ')[0] !== 'Bearer' ||
+      !refresh_token
+    ) {
+      throw new UnauthorizedException();
     }
 
-    const refreshRes = await this.authService.refreshToken(
-      refresh_token,
-      req.user,
-      req.session,
-    );
+    const refreshRes = await this.authService.refreshToken(refresh_token);
 
     console.log('refreshRes: ', refreshRes);
 

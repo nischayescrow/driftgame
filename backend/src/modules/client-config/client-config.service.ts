@@ -38,7 +38,14 @@ export class ClientConfigService {
         throw new NotFoundException('Client config do not found!');
       }
 
-      return findConfig;
+      return {
+        data: {
+          _id: findConfig.id,
+          clientBuildVersion: findConfig.clientBuildVersion,
+          updateRequired: findConfig.updateRequired,
+          underMaintenance: findConfig.underMaintenance,
+        },
+      };
     } catch (error) {
       console.log(error);
       throw error;
@@ -57,7 +64,14 @@ export class ClientConfigService {
         throw new NotFoundException('Client config do not found!');
       }
 
-      return findConfig;
+      return {
+        data: {
+          _id: findConfig.id,
+          clientBuildVersion: findConfig.clientBuildVersion,
+          updateRequired: findConfig.updateRequired,
+          underMaintenance: findConfig.underMaintenance,
+        },
+      };
     } catch (error) {
       console.log(error);
       throw error;
@@ -107,7 +121,7 @@ export class ClientConfigService {
 
       if (updateClientConfigDto.underMaintenance) {
         updateClientConfigDto.underMaintenance = Object.assign(
-          findConfig.underMaintenance,
+          findConfig.data.underMaintenance,
           updateClientConfigDto.underMaintenance,
         );
       }

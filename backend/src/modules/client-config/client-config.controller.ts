@@ -24,7 +24,7 @@ export class ClientConfigController {
     return this.clientConfigService.findById(id.trim(), all);
   }
 
-  @Get('get/:version')
+  @Get('get/version/:version')
   @HttpCode(HttpStatus.OK)
   findByBuildVersion(
     @Param('version') version: string,
