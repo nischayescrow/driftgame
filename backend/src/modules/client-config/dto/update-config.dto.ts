@@ -1,9 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
-import {
-  ClientConfigStatus,
-  CreateClientConfigDto,
-  UnderMaintenanceDto,
-} from './create-config.dto';
+import { UnderMaintenanceDto } from './create-config.dto';
 import {
   IsBoolean,
   IsEnum,
@@ -13,6 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { UpdateRequired } from '../schemas/client-config.schema';
 
 export class UpdateUnderMaintenanceDto extends PartialType(
   UnderMaintenanceDto,
@@ -24,8 +21,8 @@ export class UpdateClientConfigDto {
   clientBuildVersion?: number;
 
   @IsOptional()
-  @IsEnum(ClientConfigStatus)
-  updateRequired?: ClientConfigStatus;
+  @IsEnum(UpdateRequired)
+  updateRequired?: UpdateRequired;
 
   @IsOptional()
   @ValidateNested()

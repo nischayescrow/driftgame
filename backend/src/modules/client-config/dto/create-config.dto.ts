@@ -9,11 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-
-export enum ClientConfigStatus {
-  ACTIVE = 0,
-  UPDATE_REQUIRED = 1,
-}
+import { UpdateRequired } from '../schemas/client-config.schema';
 
 export class UnderMaintenanceDto {
   @IsNotEmpty()
@@ -35,8 +31,8 @@ export class CreateClientConfigDto {
   clientBuildVersion: number;
 
   @IsNotEmpty()
-  @IsEnum(ClientConfigStatus)
-  updateRequired: ClientConfigStatus;
+  @IsEnum(UpdateRequired)
+  updateRequired: UpdateRequired;
 
   @ValidateNested()
   @Type(() => UnderMaintenanceDto)

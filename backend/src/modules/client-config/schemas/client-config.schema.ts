@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument } from 'mongoose';
 
 export enum UpdateRequired {
-  ACTIVE = 0,
+  NOT_REQUIRED = 0,
   UPDATE_REQUIRED = 1,
 }
 
@@ -29,7 +29,7 @@ export class ClientConfig extends Document {
   @Prop({
     type: Number,
     enum: UpdateRequired,
-    default: UpdateRequired.ACTIVE,
+    default: UpdateRequired.NOT_REQUIRED,
   })
   updateRequired: number;
 
