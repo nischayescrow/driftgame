@@ -18,6 +18,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { ClientConfigModule } from './modules/client-config/client-config.module';
 import { SocketModule } from './modules/socket/socket.module';
+import { GameOpenModule } from './modules/game-open/game-open.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { SocketModule } from './modules/socket/socket.module';
     RedisModule,
     ClientConfigModule,
     SocketModule,
+    GameOpenModule,
   ],
   controllers: [AppController],
   providers: [AppService],

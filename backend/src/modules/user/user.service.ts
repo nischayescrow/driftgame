@@ -152,10 +152,18 @@ export class UserService {
         updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
       }
 
-      await this.userRepo.update(id, updateUserDto);
+      const updated = await this.userRepo.update(id, updateUserDto);
 
       return {
         message: 'User updated successfully',
+        data: {
+          _id: updated?.id,
+          first_name: updated?.first_name,
+          last_name: updated?.last_name,
+          email: updated?.email,
+          email_verified: updated?.email_verified,
+          picture: updated?.picture,
+        },
       };
     } catch (error) {
       console.log(error);

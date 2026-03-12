@@ -104,7 +104,9 @@ export class UserRepository {
     id: string,
     data: Partial<UserDocument>,
   ): Promise<UserDocument | null> {
-    return await this.userModel.findByIdAndUpdate(id, data);
+    return await this.userModel.findByIdAndUpdate(id, data, {
+      returnDocument: 'after',
+    });
   }
 
   async addValInSetField(
