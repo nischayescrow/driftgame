@@ -15,7 +15,7 @@ import { UserService } from '../user/user.service';
 import { FriendReqService } from '../user/friendReq.service';
 
 @Injectable()
-export class LobbyService {
+export class FriendService {
   constructor(
     @Inject(REDIS_CLIENT) private redis: Redis,
     @Inject(UserService) private userService: UserService,
@@ -77,7 +77,6 @@ export class LobbyService {
       }
 
       // if there is already pending request
-
       if (
         sender.data.sentFriendRequests &&
         sender.data.sentFriendRequests.length > 0
@@ -131,7 +130,7 @@ export class LobbyService {
           throw new UnauthorizedException('User do not found!');
         }
 
-        server.to(String(findReceiverSocket)).emit('friend-req', {
+        server.to(String(findReceiverSocket)).emit('friend:request:received', {
           requestId: friendRequest.id,
           message: `Friend request received from "${findUser.data.first_name + ' ' + findUser.data.last_name}"`,
         });

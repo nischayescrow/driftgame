@@ -122,11 +122,11 @@ function App() {
       store.socket.on("friend-req", (payload: any) => {
         console.log("friend-req: ", payload);
         if (confirm(payload.message)) {
-          store.socket.emit("lobby:friendRequest:accepted", {
+          store.socket.emit("friend:request:accept", {
             requestId: payload.requestId,
           });
         } else {
-          store.socket.emit("lobby:friendRequest:rejected", {
+          store.socket.emit("friend:request:reject", {
             requestId: payload.requestId,
           });
         }
@@ -170,7 +170,7 @@ function App() {
     console.log("user_id: ", user_id);
 
     if (store.socket) {
-      store.socket.emit("lobby:friendRequest:sent", {
+      store.socket.emit("friend:request:send", {
         sender_id: store.user.id,
         receiver_id: user_id,
       });

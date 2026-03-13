@@ -13,7 +13,7 @@ import type { Cache } from 'cache-manager';
 import { Inject } from '@nestjs/common';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { LobbyService } from './lobby.service';
+import { FriendService } from './friend.service';
 
 export enum SocketStatus {
   DISCONNECTED = 'disconnected',
@@ -30,7 +30,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Inject(AuthService) private readonly authService: AuthService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    @Inject(LobbyService) private readonly lobbyService: LobbyService,
+    @Inject(FriendService) private readonly friendService: FriendService,
   ) {}
 
   @WebSocketServer()
@@ -49,7 +49,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     await this.redis.hexpire(
       `sessions:${user_id}`,
-      20,
+      15 * 60,
       'FIELDS',
       3,
       'socket_id',
@@ -58,10 +58,12 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     // Redis:Socket
-    await this.redis.set(`sockets:${socket_id}`, user_id, 'EX', 20);
+    await this.redis.set(`sockets:${socket_id}`, user_id, 'EX', 15 * 60);
+    // await this.redis.set(`sockets:${socket_id}`, user_id);
 
     //Redis:online total users
-    await this.redis.set(`online:${user_id}`, user_id, 'EX', 20);
+    await this.redis.set(`online:${user_id}`, user_id, 'EX', 15 * 60);
+    // await this.redis.set(`online:${user_id}`, user_id);
   }
 
   async removeUser(client: Socket) {
@@ -128,18 +130,12 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.data.user = userData.user.id;
 
       // Only one user per session allows if user connect with another socket/session we end old one and start new one
-      const oldUserSession = await this.redis.hget(
+      const oldUserSocket = await this.redis.hget(
         `sessions:${client.data.user}`,
-        'session_id',
+        'socket_id',
       );
 
-      if (oldUserSession) {
-        console.log('User reconnected!!');
-        const oldUserSocket = await this.redis.hget(
-          `sessions:${client.data.user}`,
-          'socket_id',
-        );
-
+      if (oldUserSocket && oldUserSocket !== client.id) {
         const sockets = await this.server.fetchSockets();
 
         const targetSocket = sockets.find((s) => s.id === oldUserSocket);
@@ -150,12 +146,12 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Add user to redis
       await this.addUserIntoRedis(client.id, client.data.user);
 
-      if (this.playerStatusTime) clearTimeout(this.playerStatusTime);
+      // if (this.playerStatusTime) clearTimeout(this.playerStatusTime);
 
-      this.playerStatusTime = setTimeout(async () => {
-        await this.removeUser(client);
-        client.emit('player:logout');
-      }, 20000);
+      // this.playerStatusTime = setTimeout(async () => {
+      //   await this.removeUser(client);
+      //   client.emit('player:logout');
+      // }, 20000);
 
       console.log('Client connected: ', client.id);
     } catch (error) {
@@ -177,7 +173,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
 
       //wait for 20 seconds if user reconnect again other wise remove user from redis
-      await this.addUserIntoRedis(client.id, client.data.user);
+      // await this.addUserIntoRedis(client.id, client.data.user);
 
       this.playerStatusTime = setTimeout(async () => {
         await this.removeUser(client);
@@ -188,7 +184,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  //<=================== Lobby Events ===================>
+  //<=================== Friend Events ===================>
   @SubscribeMessage('player:connected')
   async playerConnecte(client: Socket, payload: any) {
     //This is heartbeat for online user, here client must send tick every 5/10 seconds
@@ -220,24 +216,24 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { ok: true };
   }
 
-  @SubscribeMessage('lobby:friendRequest:sent')
+  @SubscribeMessage('friend:request:send')
   async sentFriendReq(
     client: Socket,
     payload: { sender_id: string; receiver_id: string },
   ) {
-    await this.lobbyService.sentFriendReq(client, this.server, payload);
+    await this.friendService.sentFriendReq(client, this.server, payload);
     return { ok: true };
   }
 
-  @SubscribeMessage('lobby:friendRequest:accepted')
+  @SubscribeMessage('friend:request:accept')
   async invitationAccepted(client: Socket, payload: { requestId: string }) {
-    await this.lobbyService.friendReqAccepted(client, this.server, payload);
+    await this.friendService.friendReqAccepted(client, this.server, payload);
     return { ok: true };
   }
 
-  @SubscribeMessage('lobby:friendRequest:rejected')
+  @SubscribeMessage('friend:request:reject')
   async invitationRejected(client: Socket, payload: { requestId: string }) {
-    await this.lobbyService.friendReqRejected(client, this.server, payload);
+    await this.friendService.friendReqRejected(client, this.server, payload);
     return { ok: true };
   }
 }
