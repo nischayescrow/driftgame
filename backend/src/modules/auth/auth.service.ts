@@ -8,7 +8,12 @@ import {
 import axios from 'axios';
 import { UserService } from '../user/user.service';
 import { TokenService } from './token.service';
-import { LoginUserRes, verifySessionRes } from './types/auth.type';
+import {
+  LoginUserRes,
+  SessionHash,
+  SessionStatus,
+  verifySessionRes,
+} from './types/auth.type';
 import { UserDocument, UserStatus } from '../user/schemas/user.schema';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { EmailLoginDto } from './dto/emailLogin.dto';
@@ -18,23 +23,6 @@ import Redis from 'ioredis';
 import { randomUUID } from 'crypto';
 import { SocketStatus } from '../socket/socket.gateway';
 import { OAuth2Client } from 'google-auth-library';
-
-export enum SessionStatus {
-  BLOCKED = 0,
-  ACTIVE = 1,
-  LOGOUT = 2,
-}
-
-export interface SessionHash {
-  session_id: string;
-  user_id: string;
-  socket_id?: string;
-  socketStatus?: SocketStatus;
-  hashedToken: string;
-  status: number;
-  createdAt: number;
-  lastSeen?: number;
-}
 
 @Injectable()
 export class AuthService {

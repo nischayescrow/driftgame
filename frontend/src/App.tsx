@@ -191,13 +191,7 @@ function App() {
   }, [store.socket]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-      }}
-    >
+    <div>
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -212,37 +206,11 @@ function App() {
         transition={Bounce}
       />
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-          }}
-        >
-          <input
-            type="text"
-            autoComplete="email"
-            style={{
-              padding: "20px 5px",
-              backgroundColor: "white",
-              width: "300px",
-              color: "black",
-            }}
-            ref={userRef}
-          />
+      <div>
+        <div>
+          <input type="text" autoComplete="email" ref={userRef} />
           <button
             type="button"
-            style={{
-              padding: "20px 10px",
-              backgroundColor: "blue",
-              color: "white",
-            }}
             onClick={() => {
               if (userRef.current) oneTaplogin(userRef.current.value);
             }}
@@ -250,93 +218,30 @@ function App() {
             Email Login
           </button>
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-          }}
-        >
-          <button
-            type="button"
-            style={{
-              padding: "20px 10px",
-              backgroundColor: "blue",
-              color: "white",
-            }}
-            onClick={signup}
-          >
+        <div>
+          <button type="button" onClick={signup}>
             Sign up with Google
           </button>
-          <button
-            type="button"
-            style={{
-              padding: "20px 10px",
-              backgroundColor: "blue",
-              color: "white",
-            }}
-            onClick={() => login()}
-          >
+          <button type="button" onClick={() => login()}>
             Sign in with Google
           </button>
         </div>
       </div>
 
       {isConnected && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
-          }}
-        >
+        <div>
           {/* Friends */}
           <div>
             <p>Friends</p>
-            <ul
-              style={{
-                listStyle: "none",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-              }}
-            >
+            <ul>
               {store &&
                 store.user &&
                 store.user.friends.map((usr: any, inx: number) => (
-                  <li
-                    key={`user-${inx}`}
-                    style={{
-                      width: "100%",
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: "16px",
-                        width: "100%",
-                        backgroundColor: "white",
-                        borderRadius: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        color: "black",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                        }}
-                      >
+                  <li key={`user-${inx}`}>
+                    <div>
+                      <div>
                         {usr.picture && (
-                          <img
-                            src={usr.picture}
-                            alt="Friend Picture"
-                            style={{
-                              width: "40px",
-                              height: "40px",
-                              borderRadius: "50%",
-                            }}
-                          />
+                          <img src={usr.picture} alt="Friend Picture" />
                         )}
                         <div>
                           <p>
@@ -349,11 +254,6 @@ function App() {
                       </div>
                       <button
                         type="button"
-                        style={{
-                          padding: "20px 10px",
-                          backgroundColor: "red",
-                          color: "white",
-                        }}
                         onClick={() => sendFriendReq(usr.id)}
                       >
                         Unfriend
@@ -365,18 +265,8 @@ function App() {
           </div>
 
           {/* Disconnected */}
-          <div
-            style={{
-              display: "flex",
-              gap: "20px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                gap: "20px",
-              }}
-            >
+          <div>
+            <div>
               <p className="text-white text-xl font-semibold">
                 Socket Connected
               </p>
@@ -403,11 +293,6 @@ function App() {
 
             <button
               type="button"
-              style={{
-                padding: "20px 10px",
-                backgroundColor: "red",
-                color: "white",
-              }}
               onClick={() => {
                 if (playerStatusTick.current)
                   clearInterval(playerStatusTick.current);
@@ -422,46 +307,19 @@ function App() {
             <input
               type="text"
               onChange={(event) => fetchUsers(event.target.value)}
-              style={{
-                padding: "20px 10px",
-                backgroundColor: "white",
-                width: "500px",
-                color: "black",
-              }}
             />
 
-            <ul
-              style={{
-                listStyle: "none",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-              }}
-            >
+            <ul>
               {store &&
                 store.users &&
                 store.users.map((usr: any, inx: number) => (
                   <li key={`user-${inx}`}>
-                    <div
-                      style={{
-                        padding: "16px",
-                        backgroundColor: "white",
-                        borderRadius: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        color: "black",
-                      }}
-                    >
+                    <div>
                       <p>
                         {usr.first_name} {usr.last_name}
                       </p>
                       <button
                         type="button"
-                        style={{
-                          padding: "20px 10px",
-                          backgroundColor: "red",
-                          color: "white",
-                        }}
                         onClick={() => sendFriendReq(usr.id)}
                       >
                         Invite

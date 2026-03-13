@@ -29,7 +29,6 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Inject(TokenService) private readonly tokenService: TokenService,
     @Inject(AuthService) private readonly authService: AuthService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(FriendService) private readonly friendService: FriendService,
   ) {}
 

@@ -42,3 +42,14 @@ export interface findByIdResType {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export enum UserOnlineStatus {
+  OFFLINE = 0,
+  ONLINE = 1,
+  IN_MATCH = 2,
+}
+
+export interface FrinedLiveStatusType {
+  friend_id: string;
+  liveStatus: UserOnlineStatus;
+}

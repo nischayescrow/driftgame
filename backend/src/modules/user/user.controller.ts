@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -27,8 +28,18 @@ export class UserController {
     @Param('id') id: string,
     @Query('all') all: boolean,
     @Query('pass') pass: boolean,
+    @Query('friends') friends: boolean,
+    @Query('sentReq') pasentReqss: boolean,
+    @Query('receiveReq') receiveReq: boolean,
   ) {
-    const findUser = await this.userService.findById(id.trim(), all, pass);
+    const findUser = await this.userService.findById(
+      id.trim(),
+      all,
+      pass,
+      friends,
+      pasentReqss,
+      receiveReq,
+    );
 
     if (!findUser) throw new NotFoundException('User do not found!');
 
@@ -63,5 +74,14 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   deleteById(@Param('id') id: string) {
     return this.userService.deleteById(id.trim());
+  }
+
+  @Get('friends/status')
+  @HttpCode(HttpStatus.OK)
+  async getFriendsLiveStatus(@Req() req: Request) {
+    if (!req.user || !req.user.id) {
+      throw new UnauthorizedException();
+    }
+    return await this.userService.getFriendsOnlineStatus(req.user.id);
   }
 }

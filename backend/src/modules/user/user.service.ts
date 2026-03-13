@@ -15,15 +15,24 @@ import { Server, Socket } from 'socket.io';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { FriendReq, FriendReqStatus } from './schemas/friendReq.schema';
-import { findByIdResType, UserProj } from './types/user.type';
+import {
+  findByIdResType,
+  FrinedLiveStatusType,
+  UserOnlineStatus,
+  UserProj,
+} from './types/user.type';
 import { UserRepository } from './repositories/user.repository';
 import { FriendReqRepository } from './repositories/friendRequest.repository';
+import { REDIS_CLIENT } from '../redis/redis.module';
+import Redis from 'ioredis';
+import { SessionHash } from '../auth/types/auth.type';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly userRepo: UserRepository,
     private readonly friendReqRepo: FriendReqRepository,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
   async findById(
@@ -59,10 +68,12 @@ export class UserService {
       if (friends) {
         const findFriends = await this.userRepo.getFriends(id, all);
 
+        console.log('findById-findFriends: ', findFriends);
+
         if (
           findFriends &&
           findFriends.friends &&
-          findFriends.friends.length > 1
+          findFriends.friends.length > 0
         ) {
           const friends: findByIdResType[] = findFriends.friends.map((frn) => {
             return {
@@ -339,7 +350,47 @@ export class UserService {
     }
   }
 
-  //User: Friend CRUD
+  // User online status
+  async getUserOnlineStatus(id: string): Promise<UserOnlineStatus | null> {
+    try {
+      const findUser = await this.userRepo.findById(id, false);
+
+      console.log('findUser-findById', findUser);
+
+      if (!findUser) {
+        return null;
+      }
+
+      const userSession = (await this.redis.hgetall(
+        `sessions:${id}`,
+      )) as unknown as SessionHash;
+
+      if (!userSession || !userSession.session_id) {
+        return UserOnlineStatus.OFFLINE;
+      }
+
+      const userSocket = await this.redis.get(
+        `sockets:${userSession.socket_id}`,
+      );
+
+      if (!userSocket) {
+        return UserOnlineStatus.OFFLINE;
+      }
+
+      const userOnlineStatus = await this.redis.get(`online:${id}`);
+
+      if (!userOnlineStatus) {
+        return UserOnlineStatus.OFFLINE;
+      }
+
+      return UserOnlineStatus.ONLINE;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  //Friend CRUD
   async addFriend(id: string, friendId: string) {
     try {
       const findUser = await this.findById(id);
@@ -380,7 +431,7 @@ export class UserService {
     }
   }
 
-  //User: sentFriendRequests
+  //Friend: sentFriendRequests
   async addSentFriendReq(id: string, requestId: string) {
     try {
       const findUser = await this.findById(id);
@@ -433,7 +484,7 @@ export class UserService {
     }
   }
 
-  //User: receivedFriendRequests
+  //Friend: receivedFriendRequests
   async addReceviedFriendReq(id: string, requestId: string) {
     try {
       const findUser = await this.findById(id);
@@ -483,6 +534,47 @@ export class UserService {
 
       return {
         message: 'receviedFriendRequests removed successfully',
+      };
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  //Friend: getFriendsOnlineStatus
+  async getFriendsOnlineStatus(id: string) {
+    try {
+      const findFriends = await this.userRepo.getFriends(id);
+
+      console.log('getFriendsOnlineStatus-findFriends', findFriends);
+
+      if (!findFriends) {
+        throw new NotFoundException('User do not found!');
+      }
+
+      if (findFriends && findFriends.friends.length <= 0) {
+        return {
+          message: 'User do hane any friends!',
+        };
+      }
+
+      const friendsStatus: FrinedLiveStatusType[] = [];
+
+      for (let frn of findFriends.friends) {
+        const frnStatus = await this.getUserOnlineStatus(frn.id);
+
+        console.log('frnStatus: ', frnStatus);
+
+        if (frnStatus !== null) {
+          friendsStatus.push({
+            friend_id: frn.id,
+            liveStatus: frnStatus,
+          });
+        }
+      }
+
+      return {
+        data: friendsStatus,
       };
     } catch (error) {
       console.log(error);

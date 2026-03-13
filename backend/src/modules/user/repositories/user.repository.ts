@@ -28,7 +28,7 @@ export class UserRepository {
           _id: id,
         }
       : {
-          $and: [{ _id: id }, { status: { $ne: UserStatus.DELETED } }],
+          $and: [{ _id: id }, { status: UserStatus.ACTIVE }],
         };
 
     const findUser = await this.userModel.findOne(findQuery);
@@ -39,7 +39,7 @@ export class UserRepository {
 
     if (!findUser.friends || findUser.friends.length < 1) {
       return {
-        friends: null,
+        friends: [],
       };
     }
 
@@ -61,7 +61,7 @@ export class UserRepository {
           $and: [{ email }],
         }
       : {
-          $and: [{ email }, { status: { $ne: UserStatus.DELETED } }],
+          $and: [{ email }, { status: UserStatus.ACTIVE }],
         };
 
     const findUser = await this.userModel.findOne(findQuery);
@@ -87,7 +87,7 @@ export class UserRepository {
           _id: id,
         }
       : {
-          $and: [{ _id: id }, { status: { $ne: UserStatus.DELETED } }],
+          $and: [{ _id: id }, { status: UserStatus.ACTIVE }],
         };
 
     const findUser = await this.userModel.findOne(findQuery);
@@ -122,7 +122,7 @@ export class UserRepository {
                 { email: { $regex: text, $options: 'i' } },
               ],
             },
-            { status: { $ne: UserStatus.DELETED } },
+            { status: UserStatus.ACTIVE },
           ],
         };
 
