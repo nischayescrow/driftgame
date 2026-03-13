@@ -1,11 +1,10 @@
 import { createContext, useEffect, useState, type ReactNode } from "react";
-import { toast } from "react-toastify";
 import { io, Socket } from "socket.io-client";
 
 export const SocketContext = createContext<any>(null);
 
 const SocketProvider = ({ children }: { children: ReactNode }) => {
-  const SOCKET_URL = "http://localhost:5000/socket";
+  const SOCKET_URL = `${import.meta.env.VITE_APP_BACKEND_URL}/socket`;
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [users, setUsers] = useState<any[] | null>(null);
@@ -39,7 +38,6 @@ const SocketProvider = ({ children }: { children: ReactNode }) => {
         setToken(null);
         setUser(null);
         setUsers(null);
-        // toast.error("Socket disconnected!");
       });
     }
   }, [socket]);

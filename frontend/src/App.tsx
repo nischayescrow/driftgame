@@ -18,7 +18,7 @@ function App() {
       try {
         console.log(codeResponse);
         const singupRes = await axios.get(
-          "http://localhost:5000/auth/signup/google",
+          `${import.meta.env.VITE_APP_BACKEND_URL}/auth/signup/google`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -48,7 +48,7 @@ function App() {
       try {
         console.log(codeResponse);
         const loginRes = await axios.get(
-          "http://localhost:5000/auth/login/google",
+          `${import.meta.env.VITE_APP_BACKEND_URL}/auth/login/google`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -77,8 +77,8 @@ function App() {
   const oneTaplogin = async (email: string) => {
     try {
       const loginRes = await axios.post(
-        "http://localhost:5000/auth/login/email",
-        { email },
+        `${import.meta.env.VITE_APP_BACKEND_URL}/auth/login/email`,
+        { email, password: "admin@2026" },
         {
           headers: {
             "Content-Type": "application/json",
@@ -144,7 +144,7 @@ function App() {
   const fetchUsers = async (search: string) => {
     try {
       const userSearchRes = await axios.get(
-        `http://localhost:5000/user/search?text=${search}&page=1&limit=10`,
+        `${import.meta.env.VITE_APP_BACKEND_URL}/user/search?text=${search}&page=1&limit=10`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -227,6 +227,7 @@ function App() {
         >
           <input
             type="text"
+            autoComplete="email"
             style={{
               padding: "20px 5px",
               backgroundColor: "white",

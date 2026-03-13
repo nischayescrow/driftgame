@@ -5,7 +5,6 @@ export class EmailLoginDto {
   @IsEmail()
   email: string;
 
-  @IsOptional()
   @IsNotEmpty()
   @IsString()
   password: string;
