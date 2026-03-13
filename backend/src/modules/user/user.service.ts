@@ -15,7 +15,7 @@ import { Server, Socket } from 'socket.io';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { FriendReq, FriendReqStatus } from './schemas/friendReq.schema';
-import { UserProj } from './types/user.type';
+import { findByIdResType, UserProj } from './types/user.type';
 import { UserRepository } from './repositories/user.repository';
 import { FriendReqRepository } from './repositories/friendRequest.repository';
 
@@ -26,30 +26,16 @@ export class UserService {
     private readonly friendReqRepo: FriendReqRepository,
   ) {}
 
-  private userDataProjection: UserProj = {
-    first_name: 1,
-    last_name: 1,
-    email: 1,
-    email_verified: 1,
-    picture: 1,
-    status: 1,
-    friends: 1,
-    sentFriendRequests: 1,
-    receviedFriendRequests: 1,
-    _id: 1,
-    createdAt: 1,
-    updatedAt: 1,
-  };
-
-  async findById(id: string, all: boolean = false, pass: boolean = false) {
+  async findById(
+    id: string,
+    all: boolean = false,
+    pass: boolean = false,
+    friends: boolean = false,
+    sentReq: boolean = false,
+    receiveReq: boolean = false,
+  ) {
     try {
-      const findUser = await this.userRepo.findById(
-        id,
-        all,
-        pass
-          ? { ...this.userDataProjection, password: 1 }
-          : this.userDataProjection,
-      );
+      const findUser = await this.userRepo.findById(id, all);
 
       console.log('findUser-findById', findUser);
 
@@ -57,7 +43,147 @@ export class UserService {
         return null;
       }
 
-      return findUser;
+      let data: findByIdResType = {
+        id: findUser.id,
+        first_name: findUser.first_name,
+        last_name: findUser.last_name,
+        email: findUser.email,
+        email_verified: findUser.email_verified,
+        picture: findUser.picture,
+        status: findUser.status,
+        createdAt: findUser.createdAt,
+      };
+
+      if (pass) data.password = findUser.password;
+
+      if (friends) {
+        const findFriends = await this.userRepo.getFriends(id, all);
+
+        if (
+          findFriends &&
+          findFriends.friends &&
+          findFriends.friends.length > 1
+        ) {
+          const friends: findByIdResType[] = findFriends.friends.map((frn) => {
+            return {
+              id: frn.id,
+              first_name: frn.first_name,
+              last_name: frn.last_name,
+              email: frn.email,
+              email_verified: frn.email_verified,
+              picture: frn.picture,
+              status: frn.status,
+            };
+          });
+
+          data.friends = friends;
+        } else {
+          data.friends = [];
+        }
+      }
+
+      if (sentReq) {
+        if (
+          findUser &&
+          findUser.sentFriendRequests &&
+          findUser.sentFriendRequests.length > 1
+        ) {
+          data.sentFriendRequests = [];
+          for (let frnReq in findUser.sentFriendRequests) {
+            const findReq = await this.friendReqRepo.findById(frnReq);
+            if (!findReq) continue;
+
+            const sender = await this.userRepo.findById(
+              String(findReq.sender_id),
+            );
+
+            const receiver = await this.userRepo.findById(
+              String(findReq.receiver_id),
+            );
+
+            if (!sender || !receiver) {
+              continue;
+            }
+
+            data.sentFriendRequests.push({
+              id: findReq.id,
+              sender: {
+                id: sender.id,
+                first_name: sender.first_name,
+                last_name: sender.last_name,
+                email: sender.email,
+                email_verified: sender.email_verified,
+                picture: sender.picture,
+              },
+              receiver: {
+                id: receiver.id,
+                first_name: receiver.first_name,
+                last_name: receiver.last_name,
+                email: receiver.email,
+                email_verified: receiver.email_verified,
+                picture: receiver.picture,
+              },
+              status: findReq.status,
+              createdAt: findReq.createdAt,
+              updatedAt: findReq.updatedAt,
+            });
+          }
+        } else {
+          data.sentFriendRequests = [];
+        }
+      }
+
+      if (receiveReq) {
+        if (
+          findUser &&
+          findUser.receviedFriendRequests &&
+          findUser.receviedFriendRequests.length > 1
+        ) {
+          data.receviedFriendRequests = [];
+          for (let frnReq in findUser.receviedFriendRequests) {
+            const findReq = await this.friendReqRepo.findById(frnReq);
+            if (!findReq) continue;
+
+            const sender = await this.userRepo.findById(
+              String(findReq.sender_id),
+            );
+
+            const receiver = await this.userRepo.findById(
+              String(findReq.receiver_id),
+            );
+
+            if (!sender || !receiver) {
+              continue;
+            }
+            data.receviedFriendRequests.push({
+              id: findReq.id,
+              sender: {
+                id: sender.id,
+                first_name: sender.first_name,
+                last_name: sender.last_name,
+                email: sender.email,
+                email_verified: sender.email_verified,
+                picture: sender.picture,
+              },
+              receiver: {
+                id: receiver.id,
+                first_name: receiver.first_name,
+                last_name: receiver.last_name,
+                email: receiver.email,
+                email_verified: receiver.email_verified,
+                picture: receiver.picture,
+              },
+              status: findReq.status,
+              createdAt: findReq.createdAt,
+              updatedAt: findReq.updatedAt,
+            });
+          }
+        } else {
+          data.receviedFriendRequests = [];
+        }
+      }
+
+      return { data };
     } catch (error) {
       console.log(error);
       throw error;
@@ -70,17 +196,28 @@ export class UserService {
     pass: boolean = false,
   ) {
     try {
-      const findUser = await this.userRepo.findByEmail(
-        email,
-        all,
-        pass
-          ? { ...this.userDataProjection, password: 1 }
-          : this.userDataProjection,
-      );
+      const findUser = await this.userRepo.findByEmail(email, all);
+
+      if (!findUser) {
+        return null;
+      }
 
       console.log('findUser', findUser);
 
-      return findUser;
+      let data: findByIdResType = {
+        id: findUser.id,
+        first_name: findUser.first_name,
+        last_name: findUser.last_name,
+        email: findUser.email,
+        email_verified: findUser.email_verified,
+        picture: findUser.picture,
+        status: findUser.status,
+        createdAt: findUser.createdAt,
+      };
+
+      if (pass) data.password = findUser.password;
+
+      return { data };
     } catch (error) {
       console.log(error);
       throw error;
@@ -95,20 +232,24 @@ export class UserService {
     pass: boolean = false,
   ) {
     try {
-      const findUsers = await this.userRepo.search(
-        text,
-        limit,
-        page,
-        all,
-        pass
-          ? { ...this.userDataProjection, password: 1 }
-          : this.userDataProjection,
-      );
+      const findUsers = await this.userRepo.search(text, limit, page, all);
 
       console.log(findUsers);
 
+      const data = findUsers.users.map((usr) => {
+        return {
+          id: usr.id,
+          first_name: usr.first_name,
+          last_name: usr.last_name,
+          email: usr.email,
+          email_verified: usr.email_verified,
+          picture: usr.picture,
+          status: usr.status,
+        };
+      });
+
       return {
-        data: findUsers.users,
+        data,
         total: findUsers.total,
         page,
         limit,
@@ -154,15 +295,22 @@ export class UserService {
 
       const updated = await this.userRepo.update(id, updateUserDto);
 
+      if (!updated) {
+        throw new InternalServerErrorException(
+          'Error occured while updating user!',
+        );
+      }
+
       return {
         message: 'User updated successfully',
         data: {
-          _id: updated?.id,
-          first_name: updated?.first_name,
-          last_name: updated?.last_name,
-          email: updated?.email,
-          email_verified: updated?.email_verified,
-          picture: updated?.picture,
+          id: updated.id,
+          first_name: updated.first_name,
+          last_name: updated.last_name,
+          email: updated.email,
+          email_verified: updated.email_verified,
+          picture: updated.picture,
+          status: updated.status,
         },
       };
     } catch (error) {
@@ -180,7 +328,7 @@ export class UserService {
         throw new NotFoundException('User do not found!');
       }
 
-      await this.updateById(findUser.id, { status: UserStatus.DELETED });
+      await this.updateById(findUser.data.id, { status: UserStatus.DELETED });
 
       return {
         message: 'User deleted successfully',

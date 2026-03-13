@@ -320,7 +320,33 @@ function App() {
                         color: "black",
                       }}
                     >
-                      <p>{usr}</p>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
+                      >
+                        {usr.picture && (
+                          <img
+                            src={usr.picture}
+                            alt="Friend Picture"
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              borderRadius: "50%",
+                            }}
+                          />
+                        )}
+                        <div>
+                          <p>
+                            {usr.first_name}
+                            {usr.last_name}
+                          </p>
+
+                          <p>{usr.email}</p>
+                        </div>
+                      </div>
                       <button
                         type="button"
                         style={{
@@ -328,7 +354,7 @@ function App() {
                           backgroundColor: "red",
                           color: "white",
                         }}
-                        onClick={() => sendFriendReq(usr._id)}
+                        onClick={() => sendFriendReq(usr.id)}
                       >
                         Unfriend
                       </button>
@@ -436,7 +462,7 @@ function App() {
                           backgroundColor: "red",
                           color: "white",
                         }}
-                        onClick={() => sendFriendReq(usr._id)}
+                        onClick={() => sendFriendReq(usr.id)}
                       >
                         Invite
                       </button>

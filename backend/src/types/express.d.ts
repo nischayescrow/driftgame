@@ -1,11 +1,11 @@
 import * as express from 'express';
 import { SessionHash } from 'src/modules/auth/auth.service';
-import { UserDocument } from 'src/modules/user/schemas/user.schema';
+import { findByIdResType } from 'src/modules/user/types/user.type';
 
 declare global {
   namespace Express {
     interface Request {
-      user?: UserDocument;
+      user?: findByIdResType;
       session?: SessionHash;
     }
   }

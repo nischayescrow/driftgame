@@ -60,7 +60,10 @@ export class TokenService {
 
       return refresh_token_decoded;
     } catch (error) {
-      if (error instanceof TokenExpiredError) {
+      if (
+        error instanceof TokenExpiredError ||
+        error instanceof JsonWebTokenError
+      ) {
         return null;
       }
       throw error;

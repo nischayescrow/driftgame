@@ -32,37 +32,64 @@ export class LobbyService {
       console.log('sentFriendReq:Payload: ', payload);
 
       // Check if they are already friends
-      const sender = await this.userService.findById(payload.sender_id);
+      const sender = await this.userService.findById(
+        payload.sender_id,
+        false,
+        false,
+        true,
+        true,
+        true,
+      );
 
       if (!sender) {
         client.emit('message', { message: 'Invalid Sender id!' });
         return;
       }
 
-      const receiver = await this.userService.findById(payload.receiver_id);
+      const receiver = await this.userService.findById(
+        payload.receiver_id,
+        false,
+        false,
+        true,
+        true,
+        true,
+      );
 
       if (!receiver) {
         client.emit('message', { message: 'Invalid Receiver id!' });
         return;
       }
 
-      if (receiver.friends.includes(sender._id)) {
+      let isAlreadyFriend: boolean = false;
+
+      if (receiver.data.friends && receiver.data.friends.length > 1) {
+        for (let frn of receiver.data.friends) {
+          if (frn.id === sender.data.id) {
+            isAlreadyFriend = true;
+            break;
+          }
+        }
+      }
+
+      if (isAlreadyFriend) {
         client.emit('message', { message: `User already in friends list` });
         return;
       }
 
       // if there is already pending request
 
-      if (sender.sentFriendRequests && sender.sentFriendRequests.length > 0) {
+      if (
+        sender.data.sentFriendRequests &&
+        sender.data.sentFriendRequests.length > 0
+      ) {
         const exist = await Promise.all(
-          sender.sentFriendRequests.map(async (r) => {
-            const findReq = await this.friendReqService.findById(String(r));
+          sender.data.sentFriendRequests.map(async (r) => {
             if (
-              findReq &&
-              String(findReq.receiver_id) === receiver.id &&
-              findReq.status === FriendReqStatus.PENDING
+              r &&
+              String(r) === receiver.data.id &&
+              r.status === FriendReqStatus.PENDING
             ) {
-              return findReq;
+              return r;
             }
           }),
         );
@@ -106,7 +133,7 @@ export class LobbyService {
 
         server.to(String(findReceiverSocket)).emit('friend-req', {
           requestId: friendRequest.id,
-          message: `Friend request received from "${findUser.first_name + ' ' + findUser.last_name}"`,
+          message: `Friend request received from "${findUser.data.first_name + ' ' + findUser.data.last_name}"`,
         });
 
         await this.friendReqService.updateFriendReqStatus(
@@ -184,12 +211,12 @@ export class LobbyService {
 
       if (liveUser && liveUser.length > 0) {
         server.to(String(findSenderSocket)).emit('message', {
-          message: `Friend request accepted by "${findUser.first_name + ' ' + findUser.last_name}"`,
+          message: `Friend request accepted by "${findUser.data.first_name + ' ' + findUser.data.last_name}"`,
         });
       } else {
         // sender is not live
         client.emit('message', {
-          message: `${findUser.first_name + ' ' + findUser.last_name} is now your friend!`,
+          message: `${findUser.data.first_name + ' ' + findUser.data.last_name} is now your friend!`,
         });
       }
 
@@ -265,12 +292,12 @@ export class LobbyService {
 
       if (liveUser && liveUser.length > 0) {
         server.to(String(findSenderSocket)).emit('message', {
-          message: `Friend request rejected by "${findUser.first_name + ' ' + findUser.last_name}"`,
+          message: `Friend request rejected by "${findUser.data.first_name + ' ' + findUser.data.last_name}"`,
         });
       } else {
         // sender is not live
         client.emit('message', {
-          message: `${findUser.first_name + ' ' + findUser.last_name} rejected you request!`,
+          message: `${findUser.data.first_name + ' ' + findUser.data.last_name} rejected you request!`,
         });
       }
 

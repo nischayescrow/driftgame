@@ -40,7 +40,7 @@ export class ClientConfigService {
 
       return {
         data: {
-          _id: findConfig.id,
+          id: findConfig.id,
           clientBuildVersion: findConfig.clientBuildVersion,
           updateRequired: findConfig.updateRequired,
           underMaintenance: findConfig.underMaintenance,
@@ -66,7 +66,7 @@ export class ClientConfigService {
 
       return {
         data: {
-          _id: findConfig.id,
+          id: findConfig.id,
           clientBuildVersion: findConfig.clientBuildVersion,
           updateRequired: findConfig.updateRequired,
           underMaintenance: findConfig.underMaintenance,
@@ -127,8 +127,6 @@ export class ClientConfigService {
       }
 
       await this.clientConfigRepo.update(id, updateClientConfigDto);
-
-      await this.findById(id, true);
 
       return {
         message: 'Client config updated successfully',

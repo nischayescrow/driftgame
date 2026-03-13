@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isObjectIdOrHexString, Model, Types } from 'mongoose';
 import { User, UserDocument, UserStatus } from '../schemas/user.schema';
-import { UserProj } from '../types/user.type';
+import { FriendReqDocument } from '../schemas/friendReq.schema';
 
 @Injectable()
 export class UserRepository {
@@ -16,11 +16,46 @@ export class UserRepository {
     return await user.save();
   }
 
-  async findByEmail(
-    email: string,
-    all: boolean,
-    userProj: UserProj,
-  ): Promise<UserDocument | null> {
+  async getFriends(id: string, all: boolean = false) {
+    const isObjectId = isObjectIdOrHexString(id);
+
+    if (!isObjectId) {
+      throw new BadRequestException('Invalid user id!');
+    }
+
+    const findQuery = all
+      ? {
+          _id: id,
+        }
+      : {
+          $and: [{ _id: id }, { status: { $ne: UserStatus.DELETED } }],
+        };
+
+    const findUser = await this.userModel.findOne(findQuery);
+
+    if (!findUser) {
+      return null;
+    }
+
+    if (!findUser.friends || findUser.friends.length < 1) {
+      return {
+        friends: null,
+      };
+    }
+
+    const friends: UserDocument[] = [];
+
+    for (let frn of findUser.friends) {
+      const friend = await this.userModel.findOne({ _id: frn });
+      if (friend) friends.push(friend);
+    }
+
+    return {
+      friends,
+    };
+  }
+
+  async findByEmail(email: string, all: boolean = false) {
     const findQuery = all
       ? {
           $and: [{ email }],
@@ -29,14 +64,16 @@ export class UserRepository {
           $and: [{ email }, { status: { $ne: UserStatus.DELETED } }],
         };
 
-    return await this.userModel.findOne(findQuery, userProj);
+    const findUser = await this.userModel.findOne(findQuery);
+
+    if (!findUser) {
+      return null;
+    }
+
+    return findUser;
   }
 
-  async findById(
-    id: string,
-    all: boolean,
-    userProj: UserProj,
-  ): Promise<UserDocument | null> {
+  async findById(id: string, all: boolean = false) {
     const isObjectId = isObjectIdOrHexString(id);
 
     if (!isObjectId) {
@@ -53,7 +90,13 @@ export class UserRepository {
           $and: [{ _id: id }, { status: { $ne: UserStatus.DELETED } }],
         };
 
-    return await this.userModel.findOne(findQuery, userProj);
+    const findUser = await this.userModel.findOne(findQuery);
+
+    if (!findUser) {
+      return null;
+    }
+
+    return findUser;
   }
 
   async search(
@@ -61,7 +104,6 @@ export class UserRepository {
     limit: number = 10,
     page: number = 1,
     all: boolean = false,
-    userProj: UserProj,
   ): Promise<{ users: UserDocument[]; total: number }> {
     const findQuery = all
       ? {
@@ -88,10 +130,7 @@ export class UserRepository {
     const totalUsers = await this.userModel.countDocuments(findQuery);
 
     return {
-      users: await this.userModel
-        .find(findQuery, userProj)
-        .limit(limit)
-        .skip(skip),
+      users: await this.userModel.find(findQuery).limit(limit).skip(skip),
       total: totalUsers,
     };
   }

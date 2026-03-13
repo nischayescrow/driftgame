@@ -116,7 +116,14 @@ export class AuthService {
         return null;
       }
 
-      const findUser = await this.userService.findById(findSession.user_id);
+      const findUser = await this.userService.findById(
+        findSession.user_id,
+        false,
+        false,
+        true,
+        true,
+        true,
+      );
 
       if (!findUser) {
         return null;
@@ -124,7 +131,7 @@ export class AuthService {
 
       return {
         session: findSession,
-        user: findUser,
+        user: findUser.data,
       };
     } catch (error) {
       console.log(error);
@@ -198,7 +205,7 @@ export class AuthService {
         throw new BadRequestException('User is not registered!');
       }
 
-      if (findUser.status !== UserStatus.ACTIVE) {
+      if (findUser.data.status !== UserStatus.ACTIVE) {
         throw new BadRequestException('User account is not active!');
       }
 
@@ -208,12 +215,12 @@ export class AuthService {
 
       const access_token = await this.tokenService.signAccessToken({
         session_id: createdSession,
-        user_id: findUser.id,
+        user_id: findUser.data.id,
       });
 
       const refresh_token = await this.tokenService.signRefreshToken({
         session_id: createdSession,
-        user_id: findUser.id,
+        user_id: findUser.data.id,
       });
 
       const refresh_token_expires = new Date(
@@ -222,34 +229,30 @@ export class AuthService {
 
       const refresh_token_hashed = await bcrypt.hash(refresh_token, 10);
 
-      await this.redis.hset(`sessions:${findUser.id}`, {
+      await this.redis.hset(`sessions:${findUser.data.id}`, {
         session_id: createdSession,
-        user_id: findUser.id,
+        user_id: findUser.data.id,
         hashedToken: refresh_token_hashed,
         status: SessionStatus.ACTIVE,
         createdAt: Date.now(),
       });
 
       await this.redis.pexpire(
-        `sessions:${findUser.id}`,
+        `sessions:${findUser.data.id}`,
         7 * 24 * 60 * 60 * 1000,
       );
 
       return {
         message: 'You have logged in successfully',
         user: {
-          first_name: findUser.first_name,
-          last_name: findUser.last_name,
-          email: findUser.email,
-          email_verified: findUser.email_verified,
-          picture: findUser.picture,
-          status: findUser.status,
-          friends: findUser.friends,
-          sentFriendRequests: findUser.sentFriendRequests,
-          receviedFriendRequests: findUser.receviedFriendRequests,
-          id: findUser.id,
-          createdAt: findUser.createdAt,
-          updatedAt: findUser.updatedAt,
+          first_name: findUser.data.first_name,
+          last_name: findUser.data.last_name,
+          email: findUser.data.email,
+          email_verified: findUser.data.email_verified,
+          picture: findUser.data.picture,
+          status: findUser.data.status,
+          friends: findUser.data.friends,
+          id: findUser.data.id,
         },
         access_token,
         refresh_token,
@@ -262,7 +265,7 @@ export class AuthService {
 
   async loginWithEmail(emailLoginDto: EmailLoginDto): Promise<LoginUserRes> {
     try {
-      const findUser = await this.userService.findByEmail(
+      let findUser = await this.userService.findByEmail(
         emailLoginDto.email,
         false,
         true,
@@ -272,11 +275,24 @@ export class AuthService {
         throw new UnauthorizedException('Incorrect credentials!');
       }
 
-      if (findUser.status !== UserStatus.ACTIVE) {
+      const findUserById = await this.userService.findById(
+        findUser.data.id,
+        false,
+        false,
+        true,
+        true,
+        true,
+      );
+
+      if (!findUserById) {
+        throw new UnauthorizedException('Incorrect credentials!');
+      }
+
+      if (findUser.data.status !== UserStatus.ACTIVE) {
         throw new BadRequestException('User account is not active');
       }
 
-      if (!findUser.password) {
+      if (!findUser.data.password) {
         throw new BadRequestException(
           'You have not set any password, try login with Google!',
         );
@@ -285,7 +301,7 @@ export class AuthService {
       // check password here
       const isMatch = await bcrypt.compare(
         emailLoginDto.password,
-        findUser.password,
+        findUser.data.password,
       );
 
       if (!isMatch) {
@@ -296,25 +312,27 @@ export class AuthService {
 
       const access_token = await this.tokenService.signAccessToken({
         session_id: createdSession,
-        user_id: findUser.id,
+        user_id: findUser.data.id,
       });
 
       const refresh_token = await this.tokenService.signRefreshToken({
         session_id: createdSession,
-        user_id: findUser.id,
+        user_id: findUser.data.id,
       });
 
       const refresh_token_expires = new Date(
         Date.now() + 7 * 24 * 60 * 60 * 1000,
       );
 
+      const aceess_token_hashed = await bcrypt.hash(access_token, 10);
       const refresh_token_hashed = await bcrypt.hash(refresh_token, 10);
 
-      // console.log('refresh_token_hashed: ', refresh_token_hashed);
+      console.log('aceess_token_hashed: ', aceess_token_hashed);
+      console.log('refresh_token_hashed: ', refresh_token_hashed);
 
-      await this.redis.hset(`sessions:${findUser.id}`, {
+      await this.redis.hset(`sessions:${findUser.data.id}`, {
         session_id: createdSession,
-        user_id: findUser.id,
+        user_id: findUser.data.id,
         hashedToken: refresh_token_hashed,
         status: SessionStatus.ACTIVE,
         createdAt: Date.now(),
@@ -322,25 +340,24 @@ export class AuthService {
       });
 
       await this.redis.pexpire(
-        `sessions:${findUser.id}`,
+        `sessions:${findUser.data.id}`,
         7 * 24 * 60 * 60 * 1000,
       );
 
       return {
         message: 'You have logged in successfully',
         user: {
-          first_name: findUser.first_name,
-          last_name: findUser.last_name,
-          email: findUser.email,
-          email_verified: findUser.email_verified,
-          picture: findUser.picture,
-          status: findUser.status,
-          friends: findUser.friends,
-          sentFriendRequests: findUser.sentFriendRequests,
-          receviedFriendRequests: findUser.receviedFriendRequests,
-          id: findUser.id,
-          createdAt: findUser.createdAt,
-          updatedAt: findUser.updatedAt,
+          id: findUserById.data.id,
+          first_name: findUserById.data.first_name,
+          last_name: findUserById.data.last_name,
+          email: findUserById.data.email,
+          email_verified: findUserById.data.email_verified,
+          picture: findUserById.data.picture,
+          status: findUserById.data.status,
+          friends: findUserById.data.friends,
+          sentFriendRequests: findUserById.data.sentFriendRequests,
+          receviedFriendRequests: findUserById.data.receviedFriendRequests,
+          createdAt: findUserById.data.createdAt,
         },
         access_token,
         refresh_token,
@@ -430,6 +447,7 @@ export class AuthService {
       return {
         message: 'You have logged in successfully',
         user: {
+          id: userData.user.id,
           first_name: userData.user.first_name,
           last_name: userData.user.last_name,
           email: userData.user.email,
@@ -439,9 +457,7 @@ export class AuthService {
           friends: userData.user.friends,
           sentFriendRequests: userData.user.sentFriendRequests,
           receviedFriendRequests: userData.user.receviedFriendRequests,
-          id: userData.user.id,
           createdAt: userData.user.createdAt,
-          updatedAt: userData.user.updatedAt,
         },
         access_token: new_access_token,
         refresh_token: new_refresh_token,
