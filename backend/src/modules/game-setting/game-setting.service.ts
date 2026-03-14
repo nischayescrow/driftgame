@@ -67,7 +67,14 @@ export class GameSettingService {
         throw new NotFoundException('Game Setting do not found!');
       }
 
-      await this.gameSettingRepo.update(id, updateGameSettingDto);
+      const updated = await this.gameSettingRepo.update(
+        id,
+        updateGameSettingDto,
+      );
+
+      if (!updated) {
+        throw new NotFoundException('Game Setting do not found!');
+      }
 
       return {
         status: true,

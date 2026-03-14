@@ -41,7 +41,7 @@ export class FriendService {
       );
 
       if (!sender) {
-        client.emit('message', { message: 'Invalid Sender id!' });
+        client.emit('message', { status: 400, message: 'Invalid Sender id!' });
         return;
       }
 
@@ -54,7 +54,10 @@ export class FriendService {
       );
 
       if (!receiver) {
-        client.emit('message', { message: 'Invalid Receiver id!' });
+        client.emit('message', {
+          status: 400,
+          message: 'Invalid Receiver id!',
+        });
         return;
       }
 
@@ -70,7 +73,10 @@ export class FriendService {
       }
 
       if (isAlreadyFriend) {
-        client.emit('message', { message: `User already in friends list` });
+        client.emit('message', {
+          status: 400,
+          message: `User already in friends list`,
+        });
         return;
       }
 
@@ -93,6 +99,7 @@ export class FriendService {
 
         if (exist && exist.length > 0) {
           client.emit('message', {
+            status: 200,
             message: `Friend request still pending from user`,
           });
           return;
@@ -140,7 +147,10 @@ export class FriendService {
 
         console.log('friendRequest: ', friendRequest);
 
-        client.emit('message', { message: `Friend request sent successfully` });
+        client.emit('message', {
+          status: 200,
+          message: `Friend request sent successfully`,
+        });
       } else {
         // Receiver is not live
         await this.friendReqService.updateFriendReqStatus(
@@ -149,6 +159,7 @@ export class FriendService {
         );
 
         client.emit('message', {
+          status: 200,
           message: `User is not online, Task Added into queue`,
         });
       }
@@ -185,6 +196,7 @@ export class FriendService {
 
       if (!findReqest) {
         client.emit('message', {
+          status: 400,
           server: `Friend Request do not found!`,
         });
         return;
@@ -208,11 +220,13 @@ export class FriendService {
 
       if (liveUser && liveUser.length > 0) {
         server.to(String(findSenderSocket)).emit('message', {
+          status: 200,
           message: `Friend request accepted by "${findUser.data.first_name + ' ' + findUser.data.last_name}"`,
         });
       } else {
         // sender is not live
         client.emit('message', {
+          status: 200,
           message: `${findUser.data.first_name + ' ' + findUser.data.last_name} is now your friend!`,
         });
       }
@@ -266,6 +280,7 @@ export class FriendService {
 
       if (!findReqest) {
         client.emit('message', {
+          status: 400,
           message: `Friend Request do not found!`,
         });
         return;
@@ -294,6 +309,7 @@ export class FriendService {
       } else {
         // sender is not live
         client.emit('message', {
+          status: 401,
           message: `${findUser.data.first_name + ' ' + findUser.data.last_name} rejected you request!`,
         });
       }

@@ -78,7 +78,7 @@ export class GameSettingRepository {
     id: string,
     data: UpdateGameSettingDto,
   ): Promise<GameSettingDocument | null> {
-    const findSetting = await this.findByUserId(id);
+    const findSetting = await this.findById(id);
 
     if (!findSetting) {
       return null;

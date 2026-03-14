@@ -95,7 +95,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log('token: ', token);
 
       if (!token) {
-        client.emit('message', { server: '401:Unauthorized request!' });
+        client.emit('message', {
+          status: 401,
+          message: 'Unauthorized request!',
+        });
         client.disconnect();
         return;
       }
@@ -107,7 +110,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(tokenDecoded);
 
       if (!tokenDecoded || !tokenDecoded.session_id || !tokenDecoded.user_id) {
-        client.emit('message', { server: '401:Unauthorized request!' });
+        client.emit('message', {
+          status: 401,
+          message: 'Unauthorized request!',
+        });
         client.disconnect();
         return;
       }
@@ -119,6 +125,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (!userData) {
         client.emit('message', {
+          status: 401,
           message: 'No active session, please login again!',
         });
         client.disconnect();
