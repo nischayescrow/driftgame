@@ -6,18 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { InjectModel } from '@nestjs/mongoose';
-import { User, UserStatus } from './schemas/user.schema';
-import { isObjectIdOrHexString, Model, Types } from 'mongoose';
+import { UserStatus } from './schemas/user.schema';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
-import { Server, Socket } from 'socket.io';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
-import { FriendReq, FriendReqStatus } from './schemas/friendReq.schema';
 import {
   findByIdResType,
-  FrinedLiveStatusType,
+  FrinedsListType,
   UserOnlineStatus,
   UserProj,
 } from './types/user.type';
@@ -39,7 +33,6 @@ export class UserService {
     id: string,
     all: boolean = false,
     pass: boolean = false,
-    friends: boolean = false,
     sentReq: boolean = false,
     receiveReq: boolean = false,
   ) {
@@ -65,43 +58,15 @@ export class UserService {
 
       if (pass) data.password = findUser.password;
 
-      if (friends) {
-        const findFriends = await this.userRepo.getFriends(id, all);
-
-        console.log('findById-findFriends: ', findFriends);
-
-        if (
-          findFriends &&
-          findFriends.friends &&
-          findFriends.friends.length > 0
-        ) {
-          const friends: findByIdResType[] = findFriends.friends.map((frn) => {
-            return {
-              id: frn.id,
-              first_name: frn.first_name,
-              last_name: frn.last_name,
-              email: frn.email,
-              email_verified: frn.email_verified,
-              picture: frn.picture,
-              status: frn.status,
-            };
-          });
-
-          data.friends = friends;
-        } else {
-          data.friends = [];
-        }
-      }
-
       if (sentReq) {
         if (
           findUser &&
           findUser.sentFriendRequests &&
-          findUser.sentFriendRequests.length > 1
+          findUser.sentFriendRequests.length > 0
         ) {
           data.sentFriendRequests = [];
-          for (let frnReq in findUser.sentFriendRequests) {
-            const findReq = await this.friendReqRepo.findById(frnReq);
+          for (let frnReq of findUser.sentFriendRequests) {
+            const findReq = await this.friendReqRepo.findById(String(frnReq));
             if (!findReq) continue;
 
             const sender = await this.userRepo.findById(
@@ -118,14 +83,6 @@ export class UserService {
 
             data.sentFriendRequests.push({
               id: findReq.id,
-              sender: {
-                id: sender.id,
-                first_name: sender.first_name,
-                last_name: sender.last_name,
-                email: sender.email,
-                email_verified: sender.email_verified,
-                picture: sender.picture,
-              },
               receiver: {
                 id: receiver.id,
                 first_name: receiver.first_name,
@@ -148,11 +105,11 @@ export class UserService {
         if (
           findUser &&
           findUser.receviedFriendRequests &&
-          findUser.receviedFriendRequests.length > 1
+          findUser.receviedFriendRequests.length > 0
         ) {
           data.receviedFriendRequests = [];
-          for (let frnReq in findUser.receviedFriendRequests) {
-            const findReq = await this.friendReqRepo.findById(frnReq);
+          for (let frnReq of findUser.receviedFriendRequests) {
+            const findReq = await this.friendReqRepo.findById(String(frnReq));
             if (!findReq) continue;
 
             const sender = await this.userRepo.findById(
@@ -175,14 +132,6 @@ export class UserService {
                 email: sender.email,
                 email_verified: sender.email_verified,
                 picture: sender.picture,
-              },
-              receiver: {
-                id: receiver.id,
-                first_name: receiver.first_name,
-                last_name: receiver.last_name,
-                email: receiver.email,
-                email_verified: receiver.email_verified,
-                picture: receiver.picture,
               },
               status: findReq.status,
               createdAt: findReq.createdAt,
@@ -542,7 +491,7 @@ export class UserService {
   }
 
   //Friend: getFriendsOnlineStatus
-  async getFriendsOnlineStatus(id: string) {
+  async getFriendsList(id: string) {
     try {
       const findFriends = await this.userRepo.getFriends(id);
 
@@ -554,11 +503,11 @@ export class UserService {
 
       if (findFriends && findFriends.friends.length <= 0) {
         return {
-          message: 'User do hane any friends!',
+          message: 'User do not hane friends!',
         };
       }
 
-      const friendsStatus: FrinedLiveStatusType[] = [];
+      const friendsStatus: FrinedsListType[] = [];
 
       for (let frn of findFriends.friends) {
         const frnStatus = await this.getUserOnlineStatus(frn.id);
@@ -568,6 +517,10 @@ export class UserService {
         if (frnStatus !== null) {
           friendsStatus.push({
             friend_id: frn.id,
+            first_name: frn.first_name,
+            last_name: frn.last_name,
+            email: frn.email,
+            picture: frn.picture,
             liveStatus: frnStatus,
           });
         }

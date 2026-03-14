@@ -36,43 +36,43 @@ export class UpdateControlSettingDto {
   @IsOptional()
   @IsNotEmpty()
   @IsEnum(AccelerationPaddle)
-  acceleration_paddle: AccelerationPaddle;
+  acceleration_paddle?: AccelerationPaddle;
 
   @IsOptional()
   @IsNotEmpty()
   @IsEnum(Transmission)
-  transmission: Transmission;
+  transmission?: Transmission;
 
   @IsOptional()
   @IsNotEmpty()
   @IsNumber()
   @Min(0)
   @Max(100)
-  sensitivity: number;
+  sensitivity?: number;
 
   @IsOptional()
   @IsNotEmpty()
   @IsNumber()
   @Min(10)
   @Max(100)
-  char_look_sensitivity: number;
+  char_look_sensitivity?: number;
 
   @IsOptional()
   @IsNotEmpty()
   @IsNumber()
   @Min(10)
   @Max(100)
-  char_camera_sensitivity: number;
+  char_camera_sensitivity?: number;
 
   @IsOptional()
   @IsNotEmpty()
   @IsEnum(GameControlType)
-  game_control_type: GameControlType;
+  game_control_type?: GameControlType;
 
   @IsOptional()
   @ValidateNested()
   @Type(() => UpldateDriftTunningSettingDto)
-  drift_tunning: UpldateDriftTunningSettingDto;
+  drift_tunning?: UpldateDriftTunningSettingDto;
 }
 
 export class UpdateGameSettingDto {

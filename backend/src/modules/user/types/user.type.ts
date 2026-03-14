@@ -19,8 +19,8 @@ export interface UserProj {
 
 export interface FriendReqType {
   id: string;
-  sender: findByIdResType;
-  receiver: findByIdResType;
+  sender?: findByIdResType;
+  receiver?: findByIdResType;
   status: FriendReqStatus;
   createdAt?: Date;
   updatedAt?: Date;
@@ -49,7 +49,11 @@ export enum UserOnlineStatus {
   IN_MATCH = 2,
 }
 
-export interface FrinedLiveStatusType {
+export interface FrinedsListType {
   friend_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  picture: string;
   liveStatus: UserOnlineStatus;
 }

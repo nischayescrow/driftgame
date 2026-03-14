@@ -38,7 +38,6 @@ export class FriendService {
         false,
         true,
         true,
-        true,
       );
 
       if (!sender) {
@@ -50,7 +49,6 @@ export class FriendService {
         payload.receiver_id,
         false,
         false,
-        true,
         true,
         true,
       );

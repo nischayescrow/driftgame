@@ -110,8 +110,9 @@ export class AuthService {
         false,
         true,
         true,
-        true,
       );
+
+      console.log('verifySession-findUser: ', findUser);
 
       if (!findUser) {
         return null;
@@ -267,7 +268,6 @@ export class AuthService {
         findUser.data.id,
         false,
         false,
-        true,
         true,
         true,
       );

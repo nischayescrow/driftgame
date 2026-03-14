@@ -36,7 +36,6 @@ export class UserController {
       id.trim(),
       all,
       pass,
-      friends,
       pasentReqss,
       receiveReq,
     );
@@ -82,6 +81,6 @@ export class UserController {
     if (!req.user || !req.user.id) {
       throw new UnauthorizedException();
     }
-    return await this.userService.getFriendsOnlineStatus(req.user.id);
+    return await this.userService.getFriendsList(req.user.id);
   }
 }

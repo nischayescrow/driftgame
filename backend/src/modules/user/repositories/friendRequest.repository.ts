@@ -17,9 +17,10 @@ export class FriendReqRepository {
 
   async findById(id: string): Promise<FriendReqDocument | null> {
     const isObjectId = isObjectIdOrHexString(id);
+    console.log(id, isObjectId);
 
     if (!isObjectId) {
-      throw new BadRequestException('Invalid user id!');
+      throw new BadRequestException('Invalid request id!');
     }
 
     return await this.friendReqModel.findById(id);
