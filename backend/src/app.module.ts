@@ -19,6 +19,7 @@ import { AuthMiddleware } from './middlewares/auth/auth.middleware';
 import { ClientConfigModule } from './modules/client-config/client-config.module';
 import { SocketModule } from './modules/socket/socket.module';
 import { GameOpenModule } from './modules/game-open/game-open.module';
+import { GameSettingModule } from './modules/game-setting/game-setting.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { GameOpenModule } from './modules/game-open/game-open.module';
     ClientConfigModule,
     SocketModule,
     GameOpenModule,
+    GameSettingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
