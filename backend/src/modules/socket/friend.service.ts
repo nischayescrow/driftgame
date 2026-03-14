@@ -136,7 +136,16 @@ export class FriendService {
         }
 
         server.to(String(findReceiverSocket)).emit('friend:request:received', {
-          requestId: friendRequest.id,
+          request: {
+            id: friendRequest.id,
+            sender: {
+              id: sender.data.id,
+              first_name: sender.data.first_name,
+              last_name: sender.data.last_name,
+              email: sender.data.email,
+              picture: sender.data.picture,
+            },
+          },
           message: `Friend request received from "${findUser.data.first_name + ' ' + findUser.data.last_name}"`,
         });
 
@@ -160,7 +169,7 @@ export class FriendService {
 
         client.emit('message', {
           status: 200,
-          message: `User is not online, Task Added into queue`,
+          message: `Friend request sent successfully`,
         });
       }
 
@@ -179,6 +188,11 @@ export class FriendService {
       // console.log('result: ', result);
     } catch (error) {
       console.log(error);
+
+      client.emit('error', {
+        status: 500,
+        message: error.message,
+      });
     }
   }
 
@@ -263,6 +277,11 @@ export class FriendService {
       // console.log('result: ', result);
     } catch (error) {
       console.log(error);
+
+      client.emit('error', {
+        status: 500,
+        message: error.message,
+      });
     }
   }
 
@@ -326,6 +345,11 @@ export class FriendService {
       );
     } catch (error) {
       console.log(error);
+
+      client.emit('error', {
+        status: 500,
+        message: error.message,
+      });
     }
   }
 }
