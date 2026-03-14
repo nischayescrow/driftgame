@@ -12,7 +12,6 @@ import { Connection } from 'mongoose';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis, { createKeyv, Keyv } from '@keyv/redis';
 import { AuthModule } from './modules/auth/auth.module';
-import { UserModule } from './modules/user/user.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthMiddleware } from './middlewares/auth/auth.middleware';
@@ -20,6 +19,7 @@ import { ClientConfigModule } from './modules/client-config/client-config.module
 import { SocketModule } from './modules/socket/socket.module';
 import { GameOpenModule } from './modules/game-open/game-open.module';
 import { GameSettingModule } from './modules/game-setting/game-setting.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [

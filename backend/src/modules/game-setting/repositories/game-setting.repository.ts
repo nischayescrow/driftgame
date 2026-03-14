@@ -9,7 +9,7 @@ import { CreateGameSettingDto } from '../dto/create-game-setting.dto';
 import { UpdateGameSettingDto } from '../dto/update-game-setting.dto';
 
 @Injectable()
-export class GameOpenLogRepository {
+export class GameSettingRepository {
   constructor(
     @InjectModel(GameSetting.name)
     private gameSettingModel: Model<GameSettingDocument>,
@@ -22,35 +22,10 @@ export class GameOpenLogRepository {
 
   async findByUserId(
     user_id: Types.ObjectId,
-    min?: Date,
-    max?: Date,
   ): Promise<GameSettingDocument[] | null> {
-    const findQuery: {
-      user_id: Types.ObjectId;
-      lastOpenedAt?: {
-        $gte?: Date;
-        $lte?: Date;
-      };
-    } = { user_id };
-
-    if (min && max) {
-      findQuery.lastOpenedAt = {
-        $gte: min,
-        $lte: max,
-      };
-    } else if (min) {
-      findQuery.lastOpenedAt = {
-        $gte: max,
-      };
-    } else if (max) {
-      findQuery.lastOpenedAt = {
-        $lte: max,
-      };
-    }
-
     // console.log(findQuery);
 
-    const findLogs = await this.gameSettingModel.find(findQuery);
+    const findLogs = await this.gameSettingModel.find({ user_id });
 
     return findLogs;
   }
